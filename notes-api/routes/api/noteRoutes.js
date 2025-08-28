@@ -6,8 +6,8 @@ router.use(authMiddleware)
 
 router.get("/", async (req, res) => {
   try {
-    const notes = await Note.find({})
-    res.json(notes)
+    const allUserNotes = await Note.find({ user: req.user._id })
+    res.json(allUserNotes)
   } catch (err) {
     res.status(500).json(err)
   }
@@ -15,11 +15,29 @@ router.get("/", async (req, res) => {
 
 router.post("/", async (req, res) => {
   try {
-    const note = await Note.create({
+    const newNote = await Note.create({
       ...req.body,
-      user: req.user._id
+      user: req.user._id,
     })
-    res.status(201).json(note)
+    res.status(201).json(newNote)
+  } catch (err) {
+    res.status(400).json(err)
+  }
+})
+
+router.get("/:id", async (req, res) => {
+  try {
+    const foundNote = await Note.findById(req.params.id)
+
+    if (!foundNote) {
+      return res.status(404).json({ message: "No note found with this id!" })
+    }
+
+    if (foundNote.user !== req.user._id) {
+      return res
+        .status(403)
+        .json({ message: "User is not authorized to view this note." })
+    }
   } catch (err) {
     res.status(400).json(err)
   }
@@ -27,16 +45,23 @@ router.post("/", async (req, res) => {
 
 router.put("/:id", async (req, res) => {
   try {
-    // This needs an authorization check
-    const note = await Note.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-    })
+    const foundNote = await Note.findById(req.params.id)
 
-    if (!note) {
+    if (!foundNote) {
       return res.status(404).json({ message: "No note found with this id!" })
     }
 
-    res.json(note)
+    if (foundNote.user !== req.user._id) {
+      return res
+        .status(403)
+        .json({ message: "User is not authorized to update this note." })
+    }
+
+    const updatedNote = await Note.findByIdAndUpdate(foundNote._id, req.body, {
+      new: true,
+    })
+
+    res.json(updatedNote)
   } catch (err) {
     res.status(500).json(err)
   }
@@ -44,11 +69,16 @@ router.put("/:id", async (req, res) => {
 
 router.delete("/:id", async (req, res) => {
   try {
-    // This needs an authorization check
-    const note = await Note.findByIdAndDelete(req.params.id)
+    const foundNote = await Note.findById(req.params.id)
 
-    if (!note) {
+    if (!foundNote) {
       return res.status(404).json({ message: "No note found with this id!" })
+    }
+
+    if (foundNote.user !== req.user._id) {
+      return res
+        .status(403)
+        .json({ message: "User is not authorized to delete this note." })
     }
 
     res.json({ message: "Note deleted!" })
