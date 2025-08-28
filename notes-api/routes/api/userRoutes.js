@@ -1,5 +1,5 @@
 const router = require("express").Router()
-const { User } = require("../../models/User")
+const User = require("../../models/User")
 const { signToken } = require("../../utils/auth")
 
 router.post("/register", async (req, res) => {
@@ -8,6 +8,7 @@ router.post("/register", async (req, res) => {
     const token = signToken(user)
     res.status(201).json({ token, user })
   } catch (err) {
+    console.error(err)
     res.status(400).json(err)
   }
 })
@@ -19,7 +20,7 @@ router.post("/login", async (req, res) => {
     return res.status(400).json({ message: "Can't find this user." })
   }
 
-  const corredtPw = await user.isCorrectPassword(req.body.password)
+  const correctPw = await user.isCorrectPassword(req.body.password)
 
   if (!correctPw) {
     return res.status(400).json({ message: "Wrong password!" })
