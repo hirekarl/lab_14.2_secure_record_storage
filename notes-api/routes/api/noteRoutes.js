@@ -7,6 +7,12 @@ router.use(authMiddleware)
 
 router.get("/", async (req, res) => {
   try {
+    if (!req.user) {
+      return res
+        .status(401)
+        .json({ message: "You must be logged in to view notes." })
+    }
+
     const allUserNotes = await Note.find({ user: req.user._id })
     res.json(allUserNotes)
   } catch (err) {
@@ -16,6 +22,12 @@ router.get("/", async (req, res) => {
 
 router.post("/", async (req, res) => {
   try {
+    if (!req.user) {
+      return res
+        .status(401)
+        .json({ message: "You must be logged in to add a note." })
+    }
+
     const newNote = await Note.create({
       ...req.body,
       user: req.user._id,
