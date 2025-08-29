@@ -1,25 +1,36 @@
 const { Schema, model } = require("mongoose")
 const bcrypt = require("bcrypt")
 
-const userSchema = new Schema({
-  username: {
-    type: String,
-    required: true,
-    unique: true,
-    trim: true,
+const userSchema = new Schema(
+  {
+    username: {
+      type: String,
+      required: true,
+      unique: true,
+      trim: true,
+    },
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+      match: [/.+@.+\..+/, "Must use a valid email address"],
+    },
+    password: {
+      type: String,
+      required: true,
+      minlength: 5,
+    },
   },
-  email: {
-    type: String,
-    required: true,
-    unique: true,
-    match: [/.+@.+\..+/, "Must use a valid email address"],
-  },
-  password: {
-    type: String,
-    required: true,
-    minlength: 5,
-  },
-})
+  {
+    toJSON: {
+      transform: (_doc, ret) => {
+        delete ret.password
+        delete ret.__v
+        return ret
+      },
+    },
+  }
+)
 
 userSchema.pre("save", async function (next) {
   if (this.isNew || this.isModified("password")) {

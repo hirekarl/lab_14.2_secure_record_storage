@@ -1,4 +1,5 @@
-const router = require("express").Router()
+const express = require("express")
+const router = express.Router()
 const Note = require("../../models/Note")
 const { authMiddleware } = require("../../utils/auth")
 
@@ -33,11 +34,13 @@ router.get("/:id", async (req, res) => {
       return res.status(404).json({ message: "No note found with this id!" })
     }
 
-    if (foundNote.user !== req.user._id) {
+    if (String(req.user._id) !== String(foundNote.user)) {
       return res
         .status(403)
         .json({ message: "User is not authorized to view this note." })
     }
+
+    res.json(foundNote)
   } catch (err) {
     res.status(400).json(err)
   }
@@ -51,7 +54,7 @@ router.put("/:id", async (req, res) => {
       return res.status(404).json({ message: "No note found with this id!" })
     }
 
-    if (foundNote.user !== req.user._id) {
+    if (String(req.user._id) !== String(foundNote.user)) {
       return res
         .status(403)
         .json({ message: "User is not authorized to update this note." })
@@ -63,6 +66,7 @@ router.put("/:id", async (req, res) => {
 
     res.json(updatedNote)
   } catch (err) {
+    console.error(err)
     res.status(500).json(err)
   }
 })
@@ -75,14 +79,16 @@ router.delete("/:id", async (req, res) => {
       return res.status(404).json({ message: "No note found with this id!" })
     }
 
-    if (foundNote.user !== req.user._id) {
+    if (String(req.user._id) !== String(foundNote.user)) {
       return res
         .status(403)
         .json({ message: "User is not authorized to delete this note." })
     }
 
+    await Note.findByIdAndDelete(foundNote._id)
     res.json({ message: "Note deleted!" })
   } catch (err) {
+    console.error(err)
     res.status(500).json(err)
   }
 })
